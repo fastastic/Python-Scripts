@@ -4,28 +4,28 @@ import os
 import io
 import subprocess
 
-cmd = subprocess.Popen(["netstat"], stdout = subprocess.PIPE)
-cmd1 = subprocess.Popen(["tail", "-n+30"], stdin = cmd.stdout, stdout = subprocess.PIPE)
-cmd2 = cmd1.communicate()[0]
+cmd = "netstat | tail -n+3"
+ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr= subprocess.STDOUT)
+out = ps.communicate()[0]
 
-IPs = []
-stop = 0
+end = 0
+IPs = set()
+s = 0 
 
-for line in cmd.stdout.readlines():
+for line in out.split('\n'):
 	splitted = line.split()
 
-	if splitted[0] == "Active":
-		stop = 1
+	if len(splitted) > 0 and splitted[0] == "Active":		
+		end = 1
+	
+	if len(splitted) > 0 and splitted[len(splitted)-1] == "ESTABLISHED" and splitted[0] == "tcp":
+		IPs.add(splitted[len(splitted)-2])
+		s += 1
 
-	if splitted[len(splitted)-1] == "ESTABLISHED" and stop == 0:
-		IPs.append(splitted[len(splitted)-2])
 
-num = len(IPs)
-result = list(set(IPs))
+print "Hi ha un nombre de", len(IPs), "(", s, ")", "connexions TCP a les IPs:"
 
-print("Hi ha un total de", num, "connexions TCP a les IP: ")
-
-for i in result:
-	print result
+for i in IPs:
+	print i
 
 
